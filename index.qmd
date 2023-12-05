@@ -81,8 +81,8 @@ category_order = {
 
 # Loop door elke vraag en maak een subplot met taartdiagrammen in de vaste volgorde
 for question in questions:
-    fig = make_subplots(rows=1, cols=len(personas_cnt['Toegewezen Persona']), specs=[[{'type':'domain'}]*len(personas_cnt['Toegewezen Persona'])],
-                        subplot_titles=personas_cnt['Toegewezen Persona'])
+    fig = make_subplots(rows=1, cols=len(custom_order), specs=[[{'type':'domain'}]*len(custom_order)],
+                        subplot_titles=custom_order)
 
     for i, persona in enumerate(personas_cnt['Toegewezen Persona'], start=1):
         filtered_data = data[data['Toegewezen Persona'] == persona]
