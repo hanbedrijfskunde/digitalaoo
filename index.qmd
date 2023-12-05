@@ -1,0 +1,192 @@
+---
+title: "Digital AOO"
+execute:
+  echo: false
+format: html
+editor: visual
+jupyter: envpy39
+---
+
+## Uitkomsten survey
+
+```{python}
+import pandas as pd
+import plotly.express as px
+from plotly.subplots import make_subplots
+
+# Lees de dataset
+file_path = 'data.csv'
+data = pd.read_csv(file_path)
+
+# Bepaal aantallen per persona
+personas_cnt = data.groupby('Toegewezen Persona').size().reset_index(name='count')
+
+# Convert 'Toegewezen Persona' column to a categorical data type with custom order
+custom_order = ["De Ontluikende Ontdekker", "De Stabiele Integrator", "De Digitale Leider"]
+personas_cnt['Toegewezen Persona'] = pd.Categorical(personas_cnt['Toegewezen Persona'], categories=custom_order, ordered=True)
+
+# Sort the DataFrame based on the custom category order
+personas_cnt = personas_cnt.sort_values('Toegewezen Persona')
+N_personas = personas_cnt['count'].sum()
+
+
+fig = px.pie(personas_cnt, values='count', names='Toegewezen Persona', title=f'Verdeling Personas, N={N_personas}')
+fig.show()
+
+
+```
+
+```{python}
+# Definieer de te vervangen teksten
+teksten_te_vervangen = ["Weet niet", "Geen idee", "geen idee", "Weet ik niet", "Wij ontwerpen geen digitale toepassingen"]
+
+# Loop door de kolommen waarin je de teksten wilt vervangen
+for kolom in data.columns[1:-1]:  # Exclusief de eerste en laatste kolom
+    # Gebruik de str.replace() methode om de teksten te vervangen
+    for tekst in teksten_te_vervangen:
+        data[kolom] = data[kolom].str.replace(tekst, "geen antwoord", case=False)
+
+# Lijst van vragen
+questions = data.columns[1:-1]  # Alle vragen, exclusief Timestamp en Toegewezen Persona
+
+# Definieer een aangepaste volgorde voor de categorieën van elke vraag
+category_order = {
+    "1. Ik begrijp de strategische betekenis van digitalisering voor de HAN ____ .": 
+        ["geen antwoord", "niet", "vaag", "gedeeltelijk", "grotendeels", "heel goed"],
+    "2. Ik ben ____ overtuigd van de capaciteiten van de HAN-organisatie op het gebied van digitalisering.": 
+        ["geen antwoord", "niet", "matig", "redelijk", "grotendeels"],
+    "3. Binnen mijn afdeling / opleiding zijn er ____ digitale leiders.": 
+        ["geen antwoord", "geen", "weinig", "een aantal", "veel"],
+    "4. Digitalisering wordt bij onze afdeling / opleiding ____ aangepakt.": 
+        ["geen antwoord", "niet", "ad-hoc", "enigszins integraal", "grotendeels integraal", "integraal"],
+    "5. Digitalisering heeft momenteel ____ positie binnen het beleid van onze afdeling / opleiding.": 
+        ["geen antwoord", "geen", "een marginale", "een evenwichtige", "een belangrijke", "een sleutel-"],
+    "6. Onze afdeling / opleiding heeft de risico's omtrent digitalisering ____ in kaart.": 
+        ["geen antwoord", "niet", "vaag", "gedeeltelijk", "grotendeels"],
+    "7. Binnen onze afdeling / opleiding worden bij het ontwerp van digitale toepassingen mens en proces ____ meegenomen.": 
+        ["geen antwoord", "niet", "sporadisch", "soms", "meestal", "altijd"],
+    "8. Bij onze afdeling / opleiding zijn de organisatorische gevolgen van digitalisering en bijbehorende rollen en verantwoordelijkheden ____ duidelijk.": 
+        ["geen antwoord", "niet", "gedeeltelijk", "enigszins", "grotendeels"],
+    "9. Bij onze afdeling / opleiding is het niveau van digitale vaardigheden ____ .": 
+        ["geen antwoord", "nihil", "matig", "gemiddeld", "redelijk", "hoog"],
+    "10. De mate waarop onze afdeling / opleiding zich ontwikkelt op het gebied van digitalisering wordt ____ bijgehouden.": 
+        ["geen antwoord", "niet", "onvolledig en ad-hoc", "redelijk", "goed"],
+    "11. Digitalisering heeft tot nu toe een ____ effect gehad op gedrag en gewoontes binnen onze afdeling / opleiding.": 
+        ["geen antwoord", "geen", "beperkt", "zichtbaar", "belangrijk"],
+    "12. Wij hebben ____ toegang tot digitale technologie en bijbehorende ondersteuning.": 
+    ["Weet niet", "geen", "beperkte", "redelijke", "goede", "uitstekende"]
+}
+
+# Loop door elke vraag en maak een subplot met taartdiagrammen in de vaste volgorde
+for question in questions:
+    fig = make_subplots(rows=1, cols=len(personas_cnt['Toegewezen Persona']), specs=[[{'type':'domain'}]*len(personas_cnt['Toegewezen Persona'])],
+                        subplot_titles=personas_cnt['Toegewezen Persona'])
+
+    for i, persona in enumerate(personas_cnt['Toegewezen Persona'], start=1):
+        filtered_data = data[data['Toegewezen Persona'] == persona]
+        grouped_data = filtered_data.groupby(question).size().reset_index(name='counts')
+
+        # Sorteer de data volgens de aangepaste volgorde, indien gedefinieerd
+        if question in category_order:
+            grouped_data[question] = pd.Categorical(grouped_data[question], 
+                                                    categories=category_order[question], 
+                                                    ordered=True)
+            grouped_data.sort_values(by=question, inplace=True)
+
+        pie = px.pie(grouped_data, names=question, values='counts', 
+                     hover_data=[question, 'counts'])
+        for trace in pie.data:
+            fig.add_trace(trace, row=1, col=i)
+
+    # Update layout
+    fig.update_layout(title_text=f"Antwoordverdeling voor: {question}", height=400)
+    fig.show()
+```
+
+```{=html}
+
+<table class="table table-bordered">
+    <thead class="align-top">
+        <tr>
+            <th>Thema</th>
+            <th>De Ontluikende Ontdekker</th>
+            <th>De Stabiele Integrator</th>
+            <th>De Digitale Leider</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Strategie</td>
+            <td>Vaak een vaag of gedeeltelijk begrip van de strategische betekenis.</td>
+            <td>Redelijk begrip van de strategische betekenis.</td>
+            <td>Duidelijk en uitgebreid begrip van de strategische betekenis.</td>
+        </tr>
+        <tr>
+            <td>Governance</td>
+            <td>Ontbrekende of ad-hoc benaderingen, weinig duidelijke structuren.</td>
+            <td>Enige vorm van governance, maar mogelijk niet volledig geïntegreerd.</td>
+            <td>Goed ontwikkelde governance structuren.</td>
+        </tr>
+        <tr>
+            <td>Leiderschap</td>
+            <td>Weinig tot geen erkende digitale leiders.</td>
+            <td>Enkele erkende digitale leiders.</td>
+            <td>Meerdere erkende digitale leiders.</td>
+        </tr>
+        <tr>
+            <td>Framework</td>
+            <td>Ontbreken van een integraal framework.</td>
+            <td>Begin van een integraal framework, nog in ontwikkeling.</td>
+            <td>Goed ontwikkeld en geïntegreerd framework.</td>
+        </tr>
+        <tr>
+            <td>Beleid</td>
+            <td>Digitalisering heeft vaak een marginale positie binnen het beleid.</td>
+            <td>Digitalisering heeft een evenwichtige tot belangrijke positie.</td>
+            <td>Digitalisering heeft een sleutelpositie binnen het beleid.</td>
+        </tr>
+        <tr>
+            <td>Risico's</td>
+            <td>Risico's zijn vaak niet of gedeeltelijk in kaart gebracht.</td>
+            <td>Gedeeltelijk in kaart gebrachte risico's.</td>
+            <td>Risico's zijn goed in kaart gebracht en worden beheerd.</td>
+        </tr>
+        <tr>
+            <td>Architecture</td>
+            <td>Ontbreken van duidelijke architectuur voor projecten.</td>
+            <td>Ontwikkeling van een duidelijke architectuur.</td>
+            <td>Duidelijke en goed gestructureerde architectuur.</td>
+        </tr>
+        <tr>
+            <td>Organisatie</td>
+            <td>Beperkte organisatorische aanpassingen aan uitdagingen.</td>
+            <td>Organisatorische aanpassingen worden gemaakt, nog niet volledig.</td>
+            <td>Goed aangepaste organisatiestructuren aan transformatie.</td>
+        </tr>
+        <tr>
+            <td>Vaardigheden</td>
+            <td>Matige tot gemiddelde digitale vaardigheden.</td>
+            <td>Bovengemiddelde digitale vaardigheden.</td>
+            <td>Hoge niveau van digitale vaardigheden.</td>
+        </tr>
+        <tr>
+            <td>Meten</td>
+            <td>Onvolledige of ad-hoc metingen van ontwikkelingen.</td>
+            <td>Redelijke mate van meten van ontwikkelingen.</td>
+            <td>Goede metingen en tracking van ontwikkelingen.</td>
+        </tr>
+        <tr>
+            <td>Gedrag</td>
+            <td>Beperkte impact op gedrag en gewoontes.</td>
+            <td>Zichtbare impact op gedrag en gewoontes.</td>
+            <td>Belangrijke impact op gedrag en gewoontes.</td>
+        </tr>
+        <tr>
+            <td>Technologie</td>
+            <td>Vaak beperkte of onvoldoende toegang tot technologie en ondersteuning.</td>
+            <td>Redelijke toegang tot technologie en ondersteuning.</td>
+            <td>Uitstekende toegang tot technologie en ondersteuning.</td>
+        </tr>
+    </tbody>
+</table>
+```
