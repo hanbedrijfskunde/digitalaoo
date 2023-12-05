@@ -24,7 +24,7 @@ data = pd.read_csv(file_path)
 personas_cnt = data.groupby('Toegewezen Persona').size().reset_index(name='count')
 
 # Convert 'Toegewezen Persona' column to a categorical data type with custom order
-custom_order = ["De Ontluikende Ontdekker", "De Stabiele Integrator", "De Digitale Leider"]
+custom_order = ["De Ontluikende Ontdekker", "De Stabiele Integrator"]
 personas_cnt['Toegewezen Persona'] = pd.Categorical(personas_cnt['Toegewezen Persona'], categories=custom_order, ordered=True)
 
 # Sort the DataFrame based on the custom category order
